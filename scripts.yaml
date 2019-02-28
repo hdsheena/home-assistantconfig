@@ -1,0 +1,8 @@
+'1550590701274':
+  alias: New Script
+  sequence:
+  - above: '2'
+    condition: numeric_state
+    entity_id: sensor.solar_angle
+  - condition: template
+    value_template: ''
