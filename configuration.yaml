@@ -16,7 +16,7 @@ homeassistant:
   # Customization file
   customize: !include customize.yaml
 
-
+# some test change
     
 shell_command:
   edit_known_devices: grep -v "pattern" filename > filename2; mv filename2 filename
