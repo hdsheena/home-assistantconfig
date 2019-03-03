@@ -4,5 +4,27 @@
   - above: '2'
     condition: numeric_state
     entity_id: sensor.solar_angle
-  - condition: template
-    value_template: ''
+'1551492367299':
+  alias: pause george
+  sequence:
+  - data:
+      command: enter
+      entity_id: media_player.george
+    service: ps4.send_command
+  - data:
+      command: enter
+      entity_id: media_player.george
+    service: ps4.send_command
+  - event: LOGBOOK_ENTRY
+    event_data:
+      message: ran
+      name: ps4
+'1551576417785':
+  alias: wifi is at home
+  sequence:
+  - condition: or
+    conditions: 
+      - condition: template
+        value_template: "{{ state_attr('sensor.ha_app_cw_wi_fi_sensor', 'ssid') == 'GuardDogsOnDuty-5G' }}"
+      - condition: template
+        value_template: "{{ state_attr('sensor.ha_app_cw_wi_fi_sensor', 'ssid') == 'GuardDogsOnDuty-2.4G' }}"

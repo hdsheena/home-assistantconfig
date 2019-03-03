@@ -16,14 +16,28 @@ homeassistant:
   # Customization file
   customize: !include customize.yaml
 
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+
+recorder:
+  db_url: !secret dburl
 # some test change
     
 shell_command:
   edit_known_devices: grep -v "pattern" filename > filename2; mv filename2 filename
 
 # Show links to resources in log and frontend
-introduction:
-
+#introduction:
+# Enables configuration UI
+config:
+#enables persons
+person:
+  #enables default config feature
+default_config:
+#enables system_health
+system_health:
 # Enables the frontend
 frontend:
   themes: !include themes.yaml
@@ -33,6 +47,7 @@ mqtt:
   port: 17738
   username: !secret mqttusername
   password: !secret mqttpassword
+  discovery: true
     
 panel_iframe:
   configurator:
@@ -42,23 +57,16 @@ panel_iframe:
   terminal:
     title: Terminal
     icon: mdi:console
-    url: https://addres.to.your.hass.io:7681
+    url: http://hassio.local:7681
     
     
-# Enables configuration UI
-config:
-person:
-default_config:
+
 
 # Uncomment this if you are using SSL/TLS, running in Docker container, etc.
 # http:
 #   base_url: example.duckdns.org:8123
 
 # Checks for available updates
-# Note: This component will send some information about your system to
-# the developers to assist with development of Home Assistant.
-# For more information, please see:
-# https://home-assistant.io/blog/2016/10/25/explaining-the-updater/
 updater:
   # Optional, allows Home Assistant developers to focus on popular components.
   include_used_components: true
@@ -78,31 +86,53 @@ logbook:
 # Enables a map showing the location of tracked devices
 map:
 
+# Enables the ios app for tracking, trying to track my roommates
+ios:
+
+# Trying to get camera views in HA
+#ffmpeg:
+
+# Our PS4 component we waited so long for!
+ps4:
+
+# Track the sun
+sun:
+
+# Weather prediction
+- platform: yr
+
+# Tuya is the smart bulbs and outlet switches we have the most of
 tuya:
   username: !secret tuyausername
   password: !secret tuyapassword
   country_code: 1
   platform: smart_life
 
-# Track the sun
-sun:
+
 device_tracker:
+  #I tried the google home device tracker stuff but have given up for now.
 #  - platform: googlehome
 #    host: 192.168.1.67
 #  - platform: googlehome
 #    host: 192.168.1.76
+# Tile device tracking doesn't seem to work well either, though.
   - platform: tile
     username: !secret tileusername
     password: !secret tilepassword
     monitored_variables:
       - TILE
       - PHONE
+  - platform: mqtt_json
+    devices:
+      Courtenay-PH1: homeassistant/sensor/android_ha_app_cw_wifi/state
+
 weather:
   - platform: darksky
     api_key: !secret darksky_api_key
     
 # Sensors
 sensor: 
+  # Trying to get information about my phone to do useful things with..
   - platform: mqtt
     name: "WIFI SENSOR NAME"
     state_topic: "homeassistant/sensor/android_ha_app_cw_wifi/state"
@@ -115,44 +145,46 @@ sensor:
       - ip
       - signal
       - mac
+# weather sensor
   - platform: darksky
     api_key: !secret darksky_api_key
     forecast:
       - 0
+    update_interval: 900
     monitored_conditions:
       - summary
       - icon
       - temperature
-  # Weather prediction
-  - platform: yr
-  
+  # time date sensor
   - platform: time_date
     display_options:
       - 'time'
-      - 'date'
-      - 'date_time'
-      - 'time_date'
-      - 'time_utc'
-      - 'beat'
-  
-  - platform: template
-    sensors:
-      sun_up_down:
-        friendly_name: 'Sun Position'
-        value_template: >
-          {% if states.sun.sun.attributes.elevation > 0 %}
-          {{states.sun.sun.attributes.elevation | abs}} above the horizon
-          {% else %}
-          {{states.sun.sun.attributes.elevation | abs}} below the horizon
-          {% endif %}
-      solar_angle:
-        value_template: '{{ states.sun.sun.attributes.elevation | abs }}'
-        friendly_name: 'Sun Angle'
-        unit_of_measurement: 'degrees'
-      sunrise:
-        value_template: '{{ as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom("%H:%M") }}'
-      sunset:
-        value_template: '{{ as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom("%H:%M") }}'
+      # - 'date'
+      # - 'date_time'
+      # - 'time_date'
+      # - 'time_utc'
+      # - 'beat'
+
+# -------
+  # - platform: template
+  #   sensors:
+  #     #We had an idea to have some nice UI that would show sun position, but never got it going.. then lovelace happened..
+  #     sun_up_down:
+  #       friendly_name: 'Sun Position'
+  #       value_template: >
+  #         {% if states.sun.sun.attributes.elevation > 0 %}
+  #         {{states.sun.sun.attributes.elevation | abs}} above the horizon
+  #         {% else %}
+  #         {{states.sun.sun.attributes.elevation | abs}} below the horizon
+  #         {% endif %}
+  #     solar_angle:
+  #       value_template: '{{ states.sun.sun.attributes.elevation | abs }}'
+  #       friendly_name: 'Sun Angle'
+  #       unit_of_measurement: 'degrees'
+  #     sunrise:
+  #       value_template: '{{ as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom("%H:%M") }}'
+  #     sunset:
+  #       value_template: '{{ as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom("%H:%M") }}'
       #away_device:
       #  value_template: '{{ {% for state in states.device_tracker %} {{ state.entity_id }} {% endfor %} }}'
   
@@ -160,15 +192,16 @@ sensor:
  #   name: away device
   #  entity_id: '{{ {% for state in states.device_tracker %} {{ state.entity_id }} {% endfor %} }}'
   
-#    state: 'away'
+  #  state: 'away'
   #  type: time
   #  start: '{{ now().replace(hour=0).replace(minute=0).replace(second=0) }}'
-#    end: '{{ now() }}' 
-    
-    
+  #  end: '{{ now() }}' 
+# -------
+
+    #Configures our WEBOS tv
 notify:
   - platform: webostv
-    host: 192.168.0.73
+    host: 192.168.0.98
     name: Wingnut
     filename: webostv.conf
 
@@ -179,15 +212,28 @@ tts:
 
 # Cloud
 cloud:
-system_health:
+  google_actions:
+    entity_config:
+      media_player.george:
+        name: George
+        aliases:
+         - Playstation
+         - PS4
+        room: living room
+
+
 switch:
+  # We need this wake on lan switch to turn the TV on over the network. I think?
   - platform: wake_on_lan
     name: Wingnut
     mac_address: a8:23:fe:78:a0:37
+    # Vesync is our other smart outlets, we hav etwo fo them. they also do power monitoring
   - platform: vesync
     username: !secret vesyncusername
     password: !secret vesyncpassword
+
 light:
+  # all the lights that are on switches
   - platform: switch
     name: Living Room Light
     entity_id: switch.032000735ccf7f73125a
@@ -208,9 +254,11 @@ light:
     entities:
       - light.07484075807d3a4a669f
       - light.07484075bcddc28873fa
+
+
 media_player:
   - platform: webostv
-    host: 192.168.1.73
+    host: 192.168.1.98
     name: Wingnut
     filename: webostv.conf
     timeout: 5
@@ -225,22 +273,18 @@ media_player:
         - HDMI 1
         - LG Content Store
     
-ios:
-ffmpeg:
-ps4:
+
+# Tried to get cameras working but without success so far.
 camera:
   - platform: onvif
     host: 192.168.1.75
     name: ipcam
     username: !secret ipcamusername
     password: !secret ipcampassword
-  - platform: ffmpeg
-    #ffmpeg_bin: /usr/bin/avconv
-    name: Camera
-    input: !secret ffmpeginput
-    extra_arguments: -pred 1 -q:v 2
+  # - platform: ffmpeg
+  #   #ffmpeg_bin: /usr/bin/avconv
+  #   name: Camera
+  #   input: !secret ffmpeginput
+  #   extra_arguments: -pred 1 -q:v 2
  
     
-group: !include groups.yaml
-#automation: !include automations.yaml
-script: !include scripts.yaml

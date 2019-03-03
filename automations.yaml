@@ -1,1 +1,51 @@
-[]
+- id: '1551373694373'
+  alias: push ps button
+  trigger:
+  - entity_id: media_player.george
+    from: 'off'
+    platform: state
+    to: idle
+  condition: []
+  action:
+  - data:
+      command: ps
+      entity_id: media_player.george
+    service: ps4.send_command
+- id: '1551378295272'
+  alias: Turn tv off when ps4 is turned off
+  trigger:
+  - entity_id: media_player.george
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data:
+      entity_id: media_player.wingnut
+    service: media_player.turn_off
+- id: '1551380447279'
+  alias: Turn lamp off when tv turns on
+  trigger:
+  - entity_id: media_player.wingnut
+    from: 'off'
+    platform: state
+  condition: []
+  action:
+  - data:
+      entity_id: light.living_room_lamp
+    service: light.turn_off
+- id: '1551397187272'
+  alias: Turn on kitchen light if it's dark and the tv is shut off
+  trigger:
+  - entity_id: media_player.george
+    platform: state
+    to: 'off'
+  condition:
+  - after: sunset
+    after_offset: '+1:00:00'
+    before: sunrise
+    condition: sun
+  action:
+  - data:
+      brightness: '50'
+      entity_id: light.kitchen_light
+    service: light.turn_on
