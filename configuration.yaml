@@ -22,6 +22,8 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 
 recorder:
+  purge_keep_days: 100
+  purge_interval: 0
   db_url: !secret dburl
 # some test change
     
@@ -53,7 +55,7 @@ panel_iframe:
   configurator:
     title: Configurator
     icon: mdi:wrench
-    url: http://hassio.local:321
+    url: http://hassio.local:3218
   terminal:
     title: Terminal
     icon: mdi:console
@@ -137,20 +139,20 @@ sensor:
     name: "WIFI SENSOR NAME"
     state_topic: "homeassistant/sensor/android_ha_app_cw_wifi/state"
     value_template: "{{ value_json.status }}"
-    json_attributes:
-      - ssid
-      - link_speed
-      - bssid
-      - rssi
-      - ip
-      - signal
-      - mac
+    json_attributes_topic: "homeassistant/sensor/android_ha_app_cw_wifi/state"
+#     - ssid
+#      - link_speed
+#      - bssid
+#      - rssi
+#      - ip
+#      - signal
+#      - mac
 # weather sensor
   - platform: darksky
     api_key: !secret darksky_api_key
     forecast:
       - 0
-    update_interval: 900
+    scan_interval: 900
     monitored_conditions:
       - summary
       - icon
