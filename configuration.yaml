@@ -3,16 +3,7 @@ homeassistant:
     - type: homeassistant
    # - type: legacy_api_password
   # Name of the location where Home Assistant is running
-  name: Home
-  # Location required to calculate the time the sun rises and sets
-  latitude: 50.707545
-  longitude: -120.412399
-  # Impacts weather/sunrise data (altitude above sea level in meters)
-  elevation: 365
-  # metric for Metric, imperial for Imperial
-  unit_system: metric
-  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-  time_zone: America/Vancouver
+  
   # Customization file
   customize: !include customize.yaml
 
@@ -20,6 +11,7 @@ homeassistant:
 group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
+#secret: !include secrets.yaml
 
 recorder:
   purge_keep_days: 100
@@ -29,6 +21,10 @@ recorder:
     
 shell_command:
   edit_known_devices: grep -v "pattern" filename > filename2; mv filename2 filename
+  ptz_up: curl -k "http://192.168.1.103:25106/decoder_control.cgi?command=0&onestep=1&user=<user>&pwd=<pwd>"
+  ptz_down: curl -k "http://192.168.1.103:25106/decoder_control.cgi?command=2&onestep=1&user=<user>&pwd=<pwd>"
+  ptz_right: curl -k "http://192.168.1.103:25106/decoder_control.cgi?command=6&onestep=1&user=<user>&pwd=<pwd>"
+  ptz_left: curl -k "http://192.168.1.103:25106/decoder_control.cgi?command=4&onestep=1&user=<user>&pwd=<pwd>"
 
 # Show links to resources in log and frontend
 #introduction:
@@ -51,15 +47,15 @@ mqtt:
   password: !secret mqttpassword
   discovery: true
     
-panel_iframe:
-  configurator:
-    title: Configurator
-    icon: mdi:wrench
-    url: http://hassio.local:3218
-  terminal:
-    title: Terminal
-    icon: mdi:console
-    url: http://hassio.local:7681
+#panel_iframe:
+#  configurator:
+#    title: Configurator
+#    icon: mdi:wrench
+#    url: https://<<some string>>.ui.nabu.casa/hassio/ingress/core_configurator
+#  terminal:
+#    title: Terminal
+#    icon: mdi:console
+#    url: http://192.168.1.88:7681
     
     
 
@@ -67,7 +63,7 @@ panel_iframe:
 # Uncomment this if you are using SSL/TLS, running in Docker container, etc.
 # http:
 #   base_url: example.duckdns.org:8123
-
+#stream:
 # Checks for available updates
 updater:
   # Optional, allows Home Assistant developers to focus on popular components.
@@ -90,6 +86,9 @@ map:
 
 # Enables the ios app for tracking, trying to track my roommates
 ios:
+mobile_app:
+hacs:
+  token: !secret github
 
 # Trying to get camera views in HA
 #ffmpeg:
@@ -127,6 +126,7 @@ device_tracker:
   - platform: mqtt_json
     devices:
       Courtenay-PH1: homeassistant/sensor/android_ha_app_cw_wifi/state
+      Charlie-PH1: homeassistant/sensor/android_francois_wifi/state
 
 weather:
   - platform: darksky
@@ -140,6 +140,11 @@ sensor:
     state_topic: "homeassistant/sensor/android_ha_app_cw_wifi/state"
     value_template: "{{ value_json.status }}"
     json_attributes_topic: "homeassistant/sensor/android_ha_app_cw_wifi/state"
+  - platform: mqtt
+    name: "Charlie's wifi"
+    state_topic: "homeassistant/sensor/charlies_essential_phone_wifi/state"
+    value_template: "{{ value_json.status }}"
+    json_attributes_topic: "homeassistant/sensor/charlies_essential_phone_wifi/state"
 #     - ssid
 #      - link_speed
 #      - bssid
@@ -203,32 +208,57 @@ sensor:
     #Configures our WEBOS tv
 notify:
   - platform: webostv
-    host: 192.168.0.98
+    host: 192.168.1.98
     name: Wingnut
     filename: webostv.conf
 
 
 # Text to speech
 tts:
-  - platform: google
+  - platform: google_translate
+    service_name: google_say
 
 # Cloud
-cloud:
-  google_actions:
-    entity_config:
-      media_player.george:
-        name: George
-        aliases:
-         - Playstation
-         - PS4
-        room: living room
-
+# cloud:
+#   google_actions:
+#     filter:
+#       include_entities:
+#        # - switch.wingnut
+#         - camera.mjpeg_smartcam
+#       include_domains:
+#         - media_player
+#         - sensor
+#     entity_config:
+#       media_player.george:
+#         name: George
+#         aliases:
+#          - Playstation
+#          - PS4
+#         room: living room
+#       media_player.george_2:
+#         name: George
+#         aliases:
+#          - Playstation
+#          - PS4
+#         room: living room
+#       script.1556037449230:
+#         name: Watch Netflix
+#         aliases:
+#           - Turn on to netflix
+#           - Turn george onto netflix
+#         room: living room
 
 switch:
   # We need this wake on lan switch to turn the TV on over the network. I think?
   - platform: wake_on_lan
     name: Wingnut
     mac_address: a8:23:fe:78:a0:37
+  - platform: wake_on_lan
+    name: iMac Eth
+    mac_address: 78:7b:8a:c7:a2:87
+  - platform: wake_on_lan
+    name: iMac wifi
+    mac_address: 24:f6:77:01:95:ee
     # Vesync is our other smart outlets, we hav etwo fo them. they also do power monitoring
   - platform: vesync
     username: !secret vesyncusername
@@ -274,19 +304,26 @@ media_player:
         - netflix
         - HDMI 1
         - LG Content Store
-    
+        - Plex
+        #"source": "Plex", "source_list": ["HDMI 1", "LG Content Store", "Live TV", "Netflix", "Plex", "YouTube"],
+#  - platform: plex
 
 # Tried to get cameras working but without success so far.
 camera:
-  - platform: onvif
-    host: 192.168.1.75
-    name: ipcam
-    username: !secret ipcamusername
-    password: !secret ipcampassword
-  # - platform: ffmpeg
-  #   #ffmpeg_bin: /usr/bin/avconv
-  #   name: Camera
-  #   input: !secret ffmpeginput
-  #   extra_arguments: -pred 1 -q:v 2
+ # - platform: onvif
+ #   host: 192.168.1.75
+ #   name: onvif_ipcam
+#    username: !secret ipcamusername
+ #   password: !secret ipcampassword
+  - platform: mjpeg
+    name: mjpeg_smartcam
+    still_image_url: http://192.168.1.103:25106/snapshot.cgi?user=admin&pwd=hacking1
+    mjpeg_url: http://192.168.1.103:25106/videostream.cgi?user=admin&pwd=hacking1
+    username: admin
+    password: hacking1
+ # - platform: ffmpeg
+    #ffmpeg_bin: /usr/bin/avconv
+  #  name: Camera
+  #  input: !secret ffmpeginput2
+  #  extra_arguments: -pred 1 -q:v 2
  
-    
